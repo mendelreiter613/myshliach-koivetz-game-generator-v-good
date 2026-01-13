@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { GameData, GameType, GameGenerationInput } from "../types";
+import { GameType } from "../types";
+import type { GameData, GameGenerationInput } from "../types";
 import { GEMINI_MODEL } from "../constants";
 
 /**
@@ -11,13 +12,13 @@ export async function generateGameFromContent(input: GameGenerationInput, type: 
   // Always create a fresh instance to ensure we pick up the latest API key injected by the platform bridge
   // or checks localStorage for a manual key
   const apiKey = process.env.API_KEY || localStorage.getItem('gemini_api_key');
-  
+
   if (!apiKey) {
     throw new Error("No API key detected. Please click the setup button to connect your key.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  
+
   const typeSpecificInstructions = getInstructionsForType(type);
   const prompt = `You are a creative Jewish educator and game designer for MyShliach. 
   Create a ${type} game for students (ages 8-12) based on the provided Koivetz content.
@@ -63,11 +64,11 @@ export async function generateGameFromContent(input: GameGenerationInput, type: 
     return JSON.parse(text) as GameData;
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    
+
     if (error.message?.includes("not found") || error.message?.includes("key") || error.message?.includes("API_KEY")) {
       throw new Error("Invalid API Key. Please select a billing-enabled API key to continue.");
     }
-    
+
     throw new Error(error.message || "Something went wrong while creating your game.");
   }
 }
