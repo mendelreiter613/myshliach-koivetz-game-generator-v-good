@@ -8,7 +8,9 @@ import { GEMINI_MODEL } from "../constants";
  */
 export async function generateGameFromContent(input: GameGenerationInput, type: GameType): Promise<GameData> {
   // Always create a fresh instance to ensure we pick up the latest API key injected by the platform bridge
-  const apiKey = process.env.API_KEY;
+  // Always create a fresh instance to ensure we pick up the latest API key injected by the platform bridge
+  // or checks localStorage for a manual key
+  const apiKey = process.env.API_KEY || localStorage.getItem('gemini_api_key');
   
   if (!apiKey) {
     throw new Error("No API key detected. Please click the setup button to connect your key.");

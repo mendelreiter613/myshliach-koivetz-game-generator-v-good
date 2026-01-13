@@ -14,9 +14,17 @@ const App: React.FC = () => {
     view: 'INPUT',
     data: null,
   });
-  
+
   // Track if we need to show the key selection dialog
   const [isKeyRequired, setIsKeyRequired] = useState<boolean>(false);
+  const [manualKey, setManualKey] = useState("");
+
+  const handleSaveKey = () => {
+    if (manualKey.trim()) {
+      localStorage.setItem('gemini_api_key', manualKey.trim());
+      setIsKeyRequired(false);
+    }
+  };
 
   useEffect(() => {
     const checkKeyStatus = async () => {
@@ -73,18 +81,18 @@ const App: React.FC = () => {
       setState(prev => ({ ...prev, view: 'GAME', data }));
     } catch (error: any) {
       console.error("Generation error:", error);
-      
+
       const errorMessage = error.message || "Failed to generate game.";
-      
+
       // If the error looks like an API key issue, prompt for selection
-      if (errorMessage.toLowerCase().includes("key") || 
-          errorMessage.toLowerCase().includes("not found") ||
-          errorMessage.toLowerCase().includes("api_key")) {
+      if (errorMessage.toLowerCase().includes("key") ||
+        errorMessage.toLowerCase().includes("not found") ||
+        errorMessage.toLowerCase().includes("api_key")) {
         setIsKeyRequired(true);
       }
 
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         view: 'MENU',
         error: errorMessage
       }));
@@ -103,9 +111,11 @@ const App: React.FC = () => {
     setState({ view: 'INPUT', data: null, inputData: undefined });
   };
 
-  // If we are explicitly missing a key and have the platform selection tool
+  // If we are explicitly missing a key
   const win = window as any;
-  if (isKeyRequired && win.aistudio) {
+  if (isKeyRequired) {
+    const isAiStudio = !!win.aistudio;
+
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-indigo-100 animate-fade-in-up">
@@ -116,15 +126,35 @@ const App: React.FC = () => {
           <p className="text-gray-600 mb-8 leading-relaxed">
             The application needs a valid, billing-enabled API key from your Google Cloud project to continue.
           </p>
+
           <div className="space-y-4">
-            <Button onClick={handleOpenKeySelector} className="w-full text-lg py-6 shadow-xl shadow-indigo-200">
-              Select My API Key
-            </Button>
-            <a 
-              href="https://ai.google.dev/gemini-api/docs/billing" 
-              target="_blank" 
+            {isAiStudio ? (
+              <Button onClick={handleOpenKeySelector} className="w-full text-lg py-6 shadow-xl shadow-indigo-200">
+                Select My API Key
+              </Button>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <input
+                  type="password"
+                  value={manualKey}
+                  onChange={(e) => setManualKey(e.target.value)}
+                  placeholder="Paste your Gemini API Key here"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                />
+                <Button onClick={handleSaveKey} disabled={!manualKey.trim()} className="w-full py-4 shadow-lg shadow-indigo-100">
+                  Save API Key
+                </Button>
+                <p className="text-xs text-gray-400 mt-2">
+                  Key is saved locally in your browser.
+                </p>
+              </div>
+            )}
+
+            <a
+              href="https://ai.google.dev/gemini-api/docs/billing"
+              target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 text-indigo-500 font-bold hover:text-indigo-600 transition-colors"
+              className="flex items-center justify-center gap-2 text-indigo-500 font-bold hover:text-indigo-600 transition-colors mt-4"
             >
               Billing Documentation
               <ExternalLink size={16} />
@@ -156,13 +186,13 @@ const App: React.FC = () => {
               <p className="font-bold">Error</p>
               <p className="text-sm opacity-90">{state.error}</p>
             </div>
-            <button onClick={() => setState(s => ({...s, error: undefined}))} className="text-red-900 font-bold px-2">&times;</button>
+            <button onClick={() => setState(s => ({ ...s, error: undefined }))} className="text-red-900 font-bold px-2">&times;</button>
           </div>
         )}
 
         {state.view === 'INPUT' && (
           <div className="animate-fade-in-up">
-             <InputForm onSubmit={handleInputSubmit} isLoading={false} />
+            <InputForm onSubmit={handleInputSubmit} isLoading={false} />
           </div>
         )}
 
@@ -180,7 +210,7 @@ const App: React.FC = () => {
 
         {state.view === 'GAME' && state.data && (
           <div className="animate-fade-in">
-             <GameView data={state.data} onReset={handleBackToMenu} />
+            <GameView data={state.data} onReset={handleBackToMenu} />
           </div>
         )}
       </main>
