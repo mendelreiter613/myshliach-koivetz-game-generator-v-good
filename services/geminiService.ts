@@ -9,7 +9,7 @@ import { GEMINI_MODEL } from "../constants";
 export async function generateGameFromContent(input: GameGenerationInput, type: GameType): Promise<GameData> {
   // Always create a fresh instance to ensure we pick up the latest API key injected by the platform bridge
   // Check multiple sources for the API key to ensure compatibility with various environments
-  let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  let apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
   
   // Runtime fallback for browser environments where env vars might be injected into window
   if (!apiKey && typeof window !== 'undefined') {
@@ -18,6 +18,7 @@ export async function generateGameFromContent(input: GameGenerationInput, type: 
   }
   
   if (!apiKey) {
+    console.error("API Key Check Failed. Checked: import.meta.env.VITE_GEMINI_API_KEY, process.env.API_KEY, window.GEMINI_API_KEY");
     throw new Error("No API key detected. Please click the setup button to connect your key.");
   }
 
